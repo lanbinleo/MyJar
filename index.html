@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>效率存钱罐</title>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>效率存钱罐</h1>
+      <div id="total-points" style="font-size: 18px; font-weight: 600;">总积分: <span>0</span></div>
+    </header>
+
+    <div class="card">
+      <div class="card-title">添加新任务</div>
+      <form id="task-form">
+        <div class="form-group">
+          <label for="title">标题</label>
+          <input type="text" id="title" required placeholder="输入任务标题">
+        </div>
+
+        <div class="form-group">
+          <label for="description">描述</label>
+          <textarea id="description" rows="3" placeholder="简单描述你完成的任务"></textarea>
+        </div>
+
+        <div class="form-group range-field">
+          <label>权重 (1-10)</label>
+          <div class="range-wrapper">
+            <input type="range" id="weight" min="1" max="10" value="5">
+            <span class="range-value" id="weight-value">5</span>
+          </div>
+        </div>
+
+        <div class="form-group range-field">
+          <label>难度 (1-10)</label>
+          <div class="range-wrapper">
+            <input type="range" id="difficulty" min="1" max="10" value="5">
+            <span class="range-value" id="difficulty-value">5</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="time">花费时间 (分钟)</label>
+          <input type="number" id="time" min="1" required value="30">
+        </div>
+
+        <div class="form-group range-field">
+          <label>完成度 (1-100%)</label>
+          <div class="range-wrapper">
+            <input type="range" id="completion" min="1" max="100" value="100">
+            <span class="range-value" id="completion-value">100%</span>
+          </div>
+        </div>
+
+        <div class="points-preview">
+          预计获得积分: <strong id="points-preview">75</strong>
+        </div>
+
+        <button type="submit">存入积分</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        最近任务
+        <button id="clear-tasks" class="btn-secondary" style="padding: 5px 10px; font-size: 12px;">清空</button>
+      </div>
+      <div class="task-list" id="task-list">
+        <!-- 任务列表将通过JS动态生成 -->
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">积分趋势</div>
+      <div class="chart-container">
+        <canvas id="points-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">任务类型分布</div>
+      <div class="chart-container">
+        <canvas id="task-distribution"></canvas>
+      </div>
+    </div>
+
+    <div class="card summary-card">
+      <div class="summary-item">
+        <div class="label">总任务数</div>
+        <div class="value" id="total-tasks">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="label">总时长 (分钟)</div>
+        <div class="value" id="total-time">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="label">平均难度</div>
+        <div class="value" id="avg-difficulty">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="label">平均完成度</div>
+        <div class="value" id="avg-completion">0%</div>
+      </div>
+    </div>
+    <!-- 在 btn-group 之前添加商城卡片 -->
+    <div class="card">
+      <div class="card-title">
+        积分商城
+        <button id="add-product" class="btn-secondary" style="padding: 5px 10px; font-size: 12px;">添加商品</button>
+      </div>
+      <div class="products-container" id="products-container">
+        <!-- 商品将通过JS动态生成 -->
+      </div>
+    </div>
+
+    <!-- 添加商品的模态框 -->
+    <div id="product-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>添加新商品</h2>
+        <form id="product-form">
+          <div class="form-group">
+            <label for="product-name">商品名称</label>
+            <input type="text" id="product-name" required placeholder="输入商品名称">
+          </div>
+
+          <div class="form-group">
+            <label for="product-description">商品描述</label>
+            <textarea id="product-description" rows="3" placeholder="简单描述这个商品"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="product-points">所需积分</label>
+            <input type="number" id="product-points" min="1" required value="100">
+          </div>
+
+          <div class="form-group">
+            <label for="product-quantity">商品数量</label>
+            <input type="number" id="product-quantity" min="1" required value="1">
+          </div>
+
+          <button type="submit">添加商品</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 购买/使用模态框 -->
+    <div id="purchase-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>商品操作</h2>
+        <div id="product-details"></div>
+        <div class="btn-group" style="margin-top: 20px;">
+          <button id="btn-purchase" class="btn-secondary">购买</button>
+          <button id="btn-use" class="btn-secondary">使用</button>
+        </div>
+      </div>
+    </div>
+    <!-- 在 "btn-group" div 上面添加以下内容 -->
+    <div class="card sync-card">
+      <div class="card-title">数据同步</div>
+
+      <!-- 用户ID表单 -->
+      <form id="user-id-form" style="display: none;">
+        <div class="form-group">
+          <label for="user-id">设置用户ID (仅使用字母和数字)</label>
+          <div class="input-group">
+            <input type="text" id="user-id" required pattern="[a-zA-Z0-9]+" placeholder="输入用户ID">
+            <button type="submit">确认</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- 用户ID显示 -->
+      <div id="user-id-display" style="display: none;">
+        <div class="user-id-info">
+          <div>当前用户ID: <strong id="user-id-value"></strong></div>
+          <button id="change-user" class="btn-secondary small">更换用户</button>
+        </div>
+        <div class="sync-info">
+          <div>上次同步: <span id="last-sync-time">从未同步</span></div>
+          <button id="sync-data">同步数据</button>
+        </div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button id="export-data" class="btn-secondary">导出数据</button>
+      <button id="import-data" class="btn-secondary">导入数据</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="main.js"></script>
+</body>
+
+</html>
